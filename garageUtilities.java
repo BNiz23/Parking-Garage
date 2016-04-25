@@ -397,6 +397,25 @@ public class garageUtilities{
 		return info;
 	}
 
+	public void seeAllReservations(){
+		String myLine;
+		try {
+			FileReader myFile = new FileReader("DailyReservations.txt");
+			Scanner scanMyFile = new Scanner(myFile);
+			System.out.println("Today's Reservations:");
+			System.out.println("---------------------");
+			while (scanMyFile.hasNext()) {
+				myLine = scanMyFile.nextLine();
+				System.out.println(myLine);
+			}
+			System.out.println();
+			myFile.close();
+		} catch (Exception ex) {
+			System.out.println("Unable to locate reservation file");
+			System.out.println();
+		}
+	}
+
 	public void updateCompletedReservations(String newLine){
 		String myLine;
 		String tempdoc = "";
@@ -425,8 +444,7 @@ public class garageUtilities{
 			String myLine;
 			FileReader myFile = new FileReader("CompletedReservations.txt");
 			Scanner scanMyFile = new Scanner(myFile);
-
-			while (scanMyFile.hasNext()) {
+			while (scanMyFile.hasNextLine()) {
 				myLine = scanMyFile.nextLine();
 				Scanner scanMyLine = new Scanner(myLine);
 				String[] tokens = myLine.split(" ");
@@ -451,43 +469,43 @@ public class garageUtilities{
 	public void masterUpdater(String accountNumber, String firstName, String lastName, String month, String day, String year) {
 
 		try {
-			int internalSearchCount = 0;
-			int totalLine = getDailyReservations();
+			boolean matchFound = false;
 			String tempDoc = "";
-			String myLine;
 			String totalVisitString = "";
 			String fileAcNo = "";
 			int totalVisit = 0;
-			int wordCounter = 0;
 			FileReader myFile = new FileReader("ReservationMasterFile.txt");
 			Scanner scanMyFile = new Scanner(myFile);
-
-			while (scanMyFile.hasNext()) {
-				myLine = scanMyFile.nextLine();
+			String myLine = scanMyFile.nextLine();
+			while (myLine != "" && myLine != "\n") {
+				if (myLine.equals("\n") || myLine.equals("")){
+					break;
+				}
 				Scanner scanMyLine = new Scanner(myLine);
 				fileAcNo = scanMyLine.next();
 
 				// Match found means that this customer has been to the garage before
 				if (fileAcNo.equals(accountNumber)) {
 					tempDoc = tempDoc + accountNumber + " " + firstName + " " + lastName + " " + month + " " + day + " " + year;
-
-					while (wordCounter < 6){
+					matchFound = true;
+					while (scanMyLine.hasNext()){
 						totalVisitString = scanMyLine.next();
-						wordCounter++;
 					}
-
 					totalVisit = Integer.parseInt(totalVisitString);
 					totalVisit++;
 					tempDoc = tempDoc + " " + totalVisit + "\n";
 
-				} else { 
+				} else {
 					tempDoc = tempDoc + myLine + "\n";
-					internalSearchCount++;
-
+				}
+				try{
+					myLine = scanMyFile.nextLine();
+				}catch(Exception ex){
+					myLine = "";
 				}
 			}
 			// Match not found after reading entire document means that this is a new customer.
-			if (internalSearchCount == totalLine) {
+			if (matchFound == false) {
 				tempDoc = tempDoc + accountNumber + " " + firstName + " " + lastName + " " + month + " " + day + " " + year + " 1";
 			}
 
@@ -505,13 +523,14 @@ public class garageUtilities{
 	// getDailyReservations method returns the total number of reservations for the day.
 	public int getDailyReservations() {
 		int counter = 0;
+		String trash;
 		try {
-			FileReader myFile = new FileReader("ReservationMasterFile.txt");
+			FileReader myFile = new FileReader("DailyReservations.txt");
 			Scanner scanMyFile = new Scanner(myFile);
 
-			while (scanMyFile.hasNext()) {
+			while (scanMyFile.hasNextLine()) {
 				counter++;
-				scanMyFile.nextLine();
+				trash = scanMyFile.nextLine();
 			}
 		} catch (Exception ex) {
 			System.out.println("Reservation master file missing or in incorrect format");

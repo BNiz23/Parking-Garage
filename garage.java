@@ -48,7 +48,7 @@ class garage{
 			letterCounter = 0;
 		}
 		availableReservedSpaces = ((reservedSections*spacesPerSection) - utilTool.getDailyReservations());
-		availableOpenSpaces = (numberFloors*sectionsPerFloor*spacesPerSection)-(availableReservedSpaces);
+		availableOpenSpaces = (numberFloors*sectionsPerFloor*spacesPerSection)-(reservedSections*spacesPerSection);
 		
 		//Initialization Message
 
@@ -61,10 +61,11 @@ class garage{
 		System.out.println("Total number of open spaces: " + availableOpenSpaces);
 		System.out.println("Unused Reserved spaces for today: " + availableReservedSpaces);
 		System.out.println();
-		System.out.println("Current garage occupancy: " + getTicketTotal() + "/" + (availableOpenSpaces + availableReservedSpaces));
+		System.out.println("Current garage occupancy: " + getTicketTotal() + "/" + (numberFloors*sectionsPerFloor*spacesPerSection));
 		System.out.println("There are " + utilTool.getDailyReservations() + " reservations for today");
 		System.out.println();
 		hourlyUpdate();
+		gui = new CustomerGui(this, availableOpenSpaces, availableReservedSpaces);
 	}
 
 	// "Trash" lines are deleting blank space between each string in the file
@@ -227,6 +228,7 @@ class garage{
 	}
 	
 	public void reservedCheckIn(){
+
 		Scanner stdin = new Scanner(System.in);
 		System.out.print("Reservation Number: ");
 		String resNumber = stdin.next();
@@ -237,6 +239,10 @@ class garage{
 				System.out.println();
 				ticketTotal ++;
 				availableReservedSpaces --;
+				gui.ResUpdate(availableReservedSpaces);
+				if (availableReservedSpaces < 1){
+					gui.ResFull();
+				}
 				utilTool.markReservationComplete(resNumber);
 			}
 		}else{
@@ -245,6 +251,7 @@ class garage{
 			System.out.println();
 		}
 	}
+	
 
 	public void hourlyUpdate() {
 		Timer timer = new Timer();
@@ -472,6 +479,21 @@ class garage{
 					System.out.println("Ticket count for section " + array[floor][section].getName() + " decremented");
 					System.out.println();
 					array[floor][section].decrementTickets();
+
+					if (array[floor][section].getReserved() == true){
+					availableReservedSpaces ++;
+					gui.ResUpdate(availableReservedSpaces);
+					if (availableReservedSpaces == 1){
+						gui.ResAvail(1);
+					}
+				}else{
+					availableOpenSpaces ++;
+					gui.OpenUpdate(availableOpenSpaces);
+					if (availableOpenSpaces == 1){
+						gui.OpenAvail(1);
+					}
+				}
+					
 					System.out.println("Exit Barrier Opened");
 					System.out.println("Thank you for using our parking garage and have a nice day!");
 					System.out.println();
@@ -505,24 +527,25 @@ class garage{
 		if (utilTool.checkPassword(employeePassword)) {
 			System.out.println("Password Verified");
 			System.out.println();
-			while(choice != 13){
+			while(choice != 14){
 
 				System.out.println("--------------------------------------------");
 				System.out.println("           Employee Access Menu:");
 				System.out.println("--------------------------------------------");
 				System.out.println("1. Check A Reservation");
-				System.out.println("2. Manually Print A Ticket");
-				System.out.println("3. Manually Open A Section Barrier");
-				System.out.println("4. View Current Garage Status");
-				System.out.println("5. View Status Of An Individual Section");
-				System.out.println("6. Change Occupancy Of A Section");
-				System.out.println("7. Change Ticket Count Of A Section");
-				System.out.println("8. Add A New Customer Account To Master Doc");
-				System.out.println("9. Delete A Customer Account From Master Doc");
-				System.out.println("10. Add New Employee Password");
-				System.out.println("11. Delete An Employee Password");
-				System.out.println("12. Run End-Of-Day Master File Update");
-				System.out.println("13. Return To Main Menu");
+				System.out.println("2. See All Reservations For Today");
+				System.out.println("3. Manually Print A Ticket");
+				System.out.println("4. Manually Open A Section Barrier");
+				System.out.println("5. View Current Garage Status");
+				System.out.println("6. View Status Of An Individual Section");
+				System.out.println("7. Change Occupancy Of A Section");
+				System.out.println("8. Change Ticket Count Of A Section");
+				System.out.println("9. Add A New Customer Account To Master Doc");
+				System.out.println("10. Delete A Customer Account From Master Doc");
+				System.out.println("11. Add New Employee Password");
+				System.out.println("12. Delete An Employee Password");
+				System.out.println("13. Run End-Of-Day Master File Update");
+				System.out.println("14. Return To Main Menu");
 				System.out.println();
 				System.out.print("Selection: ");
 				
@@ -533,42 +556,115 @@ class garage{
 
 					switch (choice) {
 						case 1:
-							utilTool.manualReservationCheck();
+							try{
+								mutex.acquire();
+								try{
+									utilTool.manualReservationCheck();
+								}finally{
+									mutex.release();
+								}
+							}catch(InterruptedException ie){
+								System.out.println(ie);
+								System.out.println();
+							}
 							break;
 						case 2:
-							manualAssign();
+							try{
+								mutex.acquire();
+								try{
+									utilTool.seeAllReservations();
+								}finally{
+									mutex.release();
+								}
+							}catch(InterruptedException ie){
+								System.out.println(ie);
+								System.out.println();
+							}
 							break;
 						case 3:
-							barrierOverride();
+							manualAssign();
 							break;
 						case 4:
-							printArray();
+							barrierOverride();
 							break;
 						case 5:
-							viewSection();
+							printArray();
 							break;
 						case 6:
-							changeOccupancy();
+							viewSection();
 							break;
 						case 7:
-							changeTickets();
+							changeOccupancy();
 							break;
 						case 8:
-							utilTool.AddAccountMaster();
+							changeTickets();
 							break;
 						case 9:
-							utilTool.DeleteAccountMaster();
+							try{
+								mutex.acquire();
+								try{
+									utilTool.AddAccountMaster();
+								}finally{
+									mutex.release();
+								}
+							}catch(InterruptedException ie){
+								System.out.println(ie);
+								System.out.println();
+							}
 							break;
 						case 10:
-							utilTool.AddPassword();
+							try{
+								mutex.acquire();
+								try{
+									utilTool.DeleteAccountMaster();
+								}finally{
+									mutex.release();
+								}
+							}catch(InterruptedException ie){
+								System.out.println(ie);
+								System.out.println();
+							}
 							break;
 						case 11:
-							utilTool.DeletePassword();
+							try{
+								mutex.acquire();
+								try{
+									utilTool.AddPassword();
+								}finally{
+									mutex.release();
+								}
+							}catch(InterruptedException ie){
+								System.out.println(ie);
+								System.out.println();
+							}
 							break;
 						case 12:
-							utilTool.updateMaster();
+							try{
+								mutex.acquire();
+								try{
+									utilTool.DeletePassword();
+								}finally{
+									mutex.release();
+								}
+							}catch(InterruptedException ie){
+								System.out.println(ie);
+								System.out.println();
+							}
 							break;
 						case 13:
+							try{
+								mutex.acquire();
+								try{
+									utilTool.updateMaster();
+								}finally{
+									mutex.release();
+								}
+							}catch(InterruptedException ie){
+								System.out.println(ie);
+								System.out.println();
+							}
+							break;
+						case 14:
 							System.out.println("Returning To Main Menu");
 							System.out.println();
 							break;
@@ -663,9 +759,15 @@ class garage{
 				System.out.print("Input: ");
 				int newOccupancy = stdin.nextInt();
 				System.out.println();
-				array[floor][section].setOccupancy(newOccupancy);
-				System.out.println("Successfully set new occupancy.");
-				System.out.println();
+				if (array[floor][section].getSpaces() < newOccupancy){
+					System.out.println("Input exceeds maximum occupancy, occupancy set to max value instead");
+					System.out.println();
+					array[floor][section].setOccupancy(array[floor][section].getSpaces());
+				}else{
+					array[floor][section].setOccupancy(newOccupancy);
+					System.out.println("Successfully set new occupancy.");
+					System.out.println();
+				}
 
 			}else{
 				System.out.println("Error, there is no such section in this garage.");
@@ -705,7 +807,17 @@ class garage{
 				int newTickets = stdin.nextInt();
 				System.out.println();
 
-				//Updates ticket count for GUI before making change
+				if (array[floor][section].getSpaces() < newTickets){
+					System.out.println("Input exceeds maximum ticket count, tickets set to max value instead");
+					System.out.println();
+					newTickets = array[floor][section].getSpaces();
+					array[floor][section].setTickets(newTickets);
+					
+				}else{
+					array[floor][section].setTickets(newTickets);
+					System.out.println("Successfully set new ticket count.");
+					System.out.println();
+				}
 
 				int oldTickets = array[floor][section].getTickets();
 				int ticketDifference = newTickets - oldTickets;
@@ -722,12 +834,6 @@ class garage{
 						gui.OpenFull();
 					}
 				}
-
-				//Updates actual section ticket count
-
-				array[floor][section].setOccupancy(newTickets);
-				System.out.println("Successfully set new ticket count.");
-				System.out.println();
 
 			}else{
 				System.out.println("Error, there is no such section in this garage.");
@@ -767,8 +873,16 @@ class garage{
 					ticketTotal ++;
 					if(array[floor][section].getReserved() == false){
 						availableOpenSpaces --;
+						gui.OpenUpdate(availableOpenSpaces);
+						if (availableOpenSpaces < 1){
+							gui.OpenFull();
+						}
 					}else{
 						availableReservedSpaces --;
+						gui.ResUpdate(availableReservedSpaces);
+						if (availableReservedSpaces < 1){
+							gui.ResFull();
+						}
 					}
 					System.out.println("Manual section assignment successful.");
 					System.out.println();
@@ -863,16 +977,15 @@ class garage{
 
 	void mainMenu(){
 		int input = 0;
-		while (input != 5){
+		while (input != 4){
 			
 			System.out.println("-----------------------------");
 			System.out.println("         Main Menu");
 			System.out.println("-----------------------------");
-			System.out.println("1. Drive Up Customer GUI");
-			System.out.println("2. Reserved Customer Check-In");
-			System.out.println("3. Sensor Simulation");
-			System.out.println("4. Employee Access");
-			System.out.println("5. Quit");
+			System.out.println("1. Reserved Customer Check-In");
+			System.out.println("2. Sensor Simulation");
+			System.out.println("3. Employee Access");
+			System.out.println("4. Quit");
 			System.out.println();			
 			
 			System.out.print("Selection: ");
@@ -885,18 +998,15 @@ class garage{
 			System.out.println();
 			switch (input){
 				case 1:
-					gui = new CustomerGui(this, availableOpenSpaces, availableReservedSpaces);
-					break;
-				case 2:
 					reservedCheckIn();
 					break;
-				case 3:
+				case 2:
 					sensorMenu();
 					break;
-				case 4:
+				case 3:
 					employeeInterface();
 					break;
-				case 5:
+				case 4:
 					System.out.println("Now Quitting");
 					System.out.println();
 					System.exit(0);
