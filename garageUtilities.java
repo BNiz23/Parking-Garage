@@ -202,9 +202,9 @@ public class garageUtilities{
 		String firstName;
 		String lastName;
 		String month;
-		String day;
-		String year;
-		String totalVisits;
+		int day;
+		int year;
+		int totalVisits;
 		boolean valid = false;
 
 		System.out.println("What is the customer's account number?");
@@ -234,19 +234,37 @@ public class garageUtilities{
 		System.out.println("Please enter the current day of the month (Example: 21)");
 		System.out.println();
 		System.out.print("Input: ");
-		day = in.next();
+		try{
+			day = in.nextInt();
+		}catch(Exception ex){
+			System.out.println("Invalid day, setting day to 1");
+			System.out.println();
+			day = 1;
+		}
 		System.out.println();
 
 		System.out.println("Please enter the current year (Example: 2016)");
 		System.out.println();
 		System.out.print("Input: ");
-		year = in.next();
+		try{
+			year = in.nextInt();
+		}catch(Exception ex){
+			System.out.println("Invalid year, setting year to 2016");
+			System.out.println();
+			year = 2016;
+		}
 		System.out.println();
 
 		System.out.println("How many times has the customer been to this garage? (Example: 5)");
 		System.out.println();
 		System.out.print("Input: ");
-		totalVisits = in.next();
+		try{
+			totalVisits = in.nextInt();
+		}catch(Exception ex){
+			System.out.println("Invalid total visit number, setting value to 1 instead.");
+			System.out.println();
+			totalVisits = 1;
+		}
 		System.out.println();
      
 		try {
@@ -428,7 +446,7 @@ public class garageUtilities{
 				tempdoc = tempdoc + myLine + "\n";
 			}
 			myFile.close();
-			tempdoc = tempdoc + newLine + "\n";
+			tempdoc = tempdoc + newLine;
 			File outFile = new File("CompletedReservations.txt");
 			PrintWriter output = new PrintWriter(outFile);
 			output.println(tempdoc);

@@ -32,6 +32,7 @@ class CustomerGui implements ActionListener  //need to implement ActionListener 
 		int startReserved = SR;		//starting number of available reserved parking spots
 		frame = new JFrame();		//initialize frame
 		frame.setForeground(Color.WHITE);	//frame color
+		//frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);	//close frame when x is pressed
 		frame.setTitle("Garage Check-in User Kiosks sample"); 	//title of frame window
 		frame.setLayout(new GridLayout(2,2,3,5)); 	//set layout manager of frame. layout params = 2 row, 2 column, vrtcl gap, hrzntl gap
 		frame.setLocation(new Point(300, 100)); 	//set frame's position. how far down/ inside window 
@@ -112,6 +113,9 @@ class CustomerGui implements ActionListener  //need to implement ActionListener 
 		frame.add(OL);			//add the panel with all open lane content to the frame
 		frame.pack(); 			//set objects' size to preferred sizes
 		frame.setVisible(true);		//so frame actually shows on screen
+		if (startReserved <1){		//if number of reservations > reserved spots, none can be chosen by drivers without reservations
+			ResFull();
+		}
 	}//Constructor
 	
 	

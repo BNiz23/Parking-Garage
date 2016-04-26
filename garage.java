@@ -66,6 +66,12 @@ class garage{
 		System.out.println();
 		hourlyUpdate();
 		gui = new CustomerGui(this, availableOpenSpaces, availableReservedSpaces);
+		if (utilTool.getDailyReservations() > reservedSections*spacesPerSection){
+			System.out.println("WARNING: Insufficient number of spaces to accomodate all of today's reservations.");
+			System.out.println("Number of reserved spaces needed: " + utilTool.getDailyReservations());
+			System.out.println("Number of reserved spaces in garage: " + (reservedSections*spacesPerSection));
+			System.out.println();
+		}
 	}
 
 	// "Trash" lines are deleting blank space between each string in the file
@@ -132,6 +138,79 @@ class garage{
 		}
 	}
 
+	public void changeGarageFile(){
+		try {
+			String myLine = "";
+			Scanner stdin = new Scanner(System.in);
+
+			System.out.print("Input new number of floors: ");
+			int floors = stdin.nextInt();
+			System.out.println();
+			if (floors < 1){
+				System.out.println("Can't have a grage with less than 1 floor");
+				System.out.println("Number of floors set to 1");
+				System.out.println();
+				floors = 1;
+			}
+
+			System.out.print("Input new number of sections per floor: ");
+			int sections = stdin.nextInt();
+			System.out.println();
+			if (sections < 1){
+				System.out.println("Can't have a garage with less than 1 section per floor");
+				System.out.println("Sections per floor set to 1");
+				System.out.println();
+				sections = 1;
+			}
+
+			System.out.print("Input new number of reserved sections: ");
+			int reserved = stdin.nextInt();
+			System.out.println();
+			if (reserved > (sections*floors)){
+				System.out.println("Number of reserved sections can not exceed total number of sections");
+				System.out.println("Number of reserved sections set to max value");
+				System.out.println();
+				reserved = sections*floors;
+			}
+			if (reserved < 0){
+				System.out.println("Cannot have a negative number of reserved sections");
+				System.out.println("Number of reserved sections set to 0");
+				System.out.println();
+				reserved = 0;
+			}
+
+			System.out.println("Input new number of spaces per section: ");
+			int spaces = stdin.nextInt();
+			System.out.println();
+			if (spaces < 1){
+				System.out.println("Cannot have less than 1 spaces per section");
+				System.out.println("Spaces per section set to 1");
+				System.out.println();
+				spaces = 1;
+			}
+			
+			try{
+				File outFile = new File("garageInfo.txt");
+				PrintWriter output = new PrintWriter(outFile);
+				output.println("Floors: " + floors);
+				output.println("Sections_Per_Floor: " + sections);
+				output.println("Number_of_Reserved_Sections: " + reserved);
+				output.println("Spaces_Per_Section: " + spaces);
+				output.close();
+				System.out.println("File: 'garageInfo.txt' Updated");
+				System.out.println("Please restart this program for changes to take effect");
+				System.out.println();
+			} catch (Exception ex) {
+				System.out.println("Error, 'garageInfo.txt' file missing or in incorrect format");
+				System.out.println("Unable to make changes");
+				System.out.println();
+			}
+		}catch(Exception ex){
+			System.out.println("Error, invalid input");
+			System.out.println();
+		}
+	}
+
 	public boolean assignSection(boolean reserved){
 		int i = 0;
 		boolean secFound = false;
@@ -145,7 +224,7 @@ class garage{
 					}
 					System.out.println();
 					array[i][j].printTicket();
-					System.out.println("New occupancy of section " + array[i][j].getName() + ": " + array[i][j].getTickets());
+					System.out.println("New ticket count of section " + array[i][j].getName() + ": " + array[i][j].getTickets());
 					System.out.println();
 					secFound = true;
 					break;
@@ -238,11 +317,11 @@ class garage{
 				System.out.println("Reservation Validated, Welcome");
 				System.out.println();
 				ticketTotal ++;
-				availableReservedSpaces --;
-				gui.ResUpdate(availableReservedSpaces);
-				if (availableReservedSpaces < 1){
-					gui.ResFull();
-				}
+				//availableReservedSpaces --;
+				//gui.ResUpdate(availableReservedSpaces);
+				//if (availableReservedSpaces < 1){
+				//	gui.ResFull();
+				//}
 				utilTool.markReservationComplete(resNumber);
 			}
 		}else{
@@ -527,7 +606,7 @@ class garage{
 		if (utilTool.checkPassword(employeePassword)) {
 			System.out.println("Password Verified");
 			System.out.println();
-			while(choice != 14){
+			while(choice != 15){
 
 				System.out.println("--------------------------------------------");
 				System.out.println("           Employee Access Menu:");
@@ -545,7 +624,8 @@ class garage{
 				System.out.println("11. Add New Employee Password");
 				System.out.println("12. Delete An Employee Password");
 				System.out.println("13. Run End-Of-Day Master File Update");
-				System.out.println("14. Return To Main Menu");
+				System.out.println("14. Edit Garage Size Info");
+				System.out.println("15. Return To Main Menu");
 				System.out.println();
 				System.out.print("Selection: ");
 				
@@ -665,6 +745,9 @@ class garage{
 							}
 							break;
 						case 14:
+							changeGarageFile();
+							break;
+						case 15:
 							System.out.println("Returning To Main Menu");
 							System.out.println();
 							break;
@@ -717,9 +800,7 @@ class garage{
 			if ((floor <= numberFloors) && (section <= sectionsPerFloor)){
 				System.out.println("You have chosen section " + array[floor][section].getName());
 				System.out.println();
-				System.out.println("Section " + array[floor][section].getName() + ":");
-				System.out.println("Ticket Count: " + array[floor][section].getTickets() + "/" + array[floor][section].getSpaces());
-				System.out.println("Current Occupancy: " + array[floor][section].getOccupancy() + "/" + array[floor][section].getSpaces());
+				array[floor][section].printInfo();
 				System.out.println();
 
 			}else{
@@ -759,6 +840,13 @@ class garage{
 				System.out.print("Input: ");
 				int newOccupancy = stdin.nextInt();
 				System.out.println();
+
+				if (newOccupancy < 0){
+					System.out.println("Cannot set occupancy to negative value, setting to 0 instead");
+					System.out.println();
+					newOccupancy = 0;
+				}
+
 				if (array[floor][section].getSpaces() < newOccupancy){
 					System.out.println("Input exceeds maximum occupancy, occupancy set to max value instead");
 					System.out.println();
@@ -806,6 +894,12 @@ class garage{
 				System.out.print("Input: ");
 				int newTickets = stdin.nextInt();
 				System.out.println();
+
+				if (newTickets < 0){
+					System.out.println("Cannot set ticket count to negative value, setting to 0 instead");
+					System.out.println();
+					newTickets = 0;
+				}
 
 				if (array[floor][section].getSpaces() < newTickets){
 					System.out.println("Input exceeds maximum ticket count, tickets set to max value instead");
@@ -978,6 +1072,7 @@ class garage{
 	void mainMenu(){
 		int input = 0;
 		while (input != 4){
+
 			
 			System.out.println("-----------------------------");
 			System.out.println("         Main Menu");
